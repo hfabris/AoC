@@ -1,8 +1,5 @@
 import sys, numpy as np
-from itertools import permutations
-
-  
-        
+from itertools import permutations    
         
 def get_number(numbers, position, mode):
     if( mode == 0):
@@ -53,9 +50,7 @@ def calculate(numbers, phase, am_input, position):
             position += 2
             
         elif( opcode == 4):
-            # print( first )
             output = first
-             
             position += 2
             return(output, False, position)
             
@@ -114,10 +109,8 @@ file = open(sys.argv[1],'r')
 file = list(map( int, file.readline().split(",")))
 numbers = file.copy()
 
-machine_states = [[j for j in numbers] for _ in range(5)]
-
-print( get_signal(range(5)))
-print( get_signal(range(5,10)))
+print("First part: ", get_signal(range(5)))
+print("Second part: ", get_signal(range(5,10)))
       
         
         
