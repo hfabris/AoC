@@ -88,10 +88,10 @@ def calculate(numbers, phase, am_input, position):
         else: break
     return(output, True, position)
 
-def part1():
+def get_signal(iter):
     highest = 0
 
-    for phase in permutations(range(5)):
+    for phase in permutations(iter):
         position = np.zeros(5, dtype=int)
         next = [0]
         done = False
@@ -108,23 +108,6 @@ def part1():
         
     return highest
 
-def part2():
-    highest = 0
-    
-    for phase in permutations(range(5,10)):
-        position = np.zeros(5, dtype=int)
-        next = [0]
-        done = False
-        i = 0
-        while not done:    
-            out = calculate(numbers, phase[i], next[-1], position[i])
-            position[i] = out[2]
-            next.append(out[0])
-            done = out[1]
-            i = (i+1) % 5
-        if next[-2] > highest:
-            highest = next[-2]
-    return highest
 
 file = open(sys.argv[1],'r')
 
@@ -133,8 +116,8 @@ numbers = file.copy()
 
 machine_states = [[j for j in numbers] for _ in range(5)]
 
-print( part1())
-print( part2())
+print( get_signal(range(5)))
+print( get_signal(range(5,10)))
       
         
         
