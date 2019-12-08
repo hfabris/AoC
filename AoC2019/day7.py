@@ -91,7 +91,6 @@ def get_signal(iter):
         next = [0]
         done = False
         i = 0
-   
         while not done:    
             out = calculate(numbers, phase[i], next[-1], position[i])
             position[i] = out[2]
@@ -100,7 +99,6 @@ def get_signal(iter):
             i = (i+1) % 5
         if next[-2] > highest:
             highest = next[-2]
-        
     return highest
 
 
