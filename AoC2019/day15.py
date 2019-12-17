@@ -1,17 +1,4 @@
-import sys, numpy,time
-
-def print_game():
-    xdim, ydim = sorted(game.keys())[-1]
-    for y in range(ydim+1):
-        line = ""
-        for x in range(xdim+1):
-            if game[ (x,y) ] == 0: line += " "
-            elif game[ (x,y) ] == 1: line += "|"
-            elif game[ (x,y) ] == 2: line += "#"
-            elif game[ (x,y) ] == 3: line += "_"
-            elif game[ (x,y) ] == 4: line += "o"
-        print(line)
-    print("\n\n")
+import sys
 
 def put_result(position, mode, base, result):
     if mode == 2:
@@ -28,16 +15,65 @@ def get_number( position, mode, base):
         return dict.get(base+dict.get(position,0),0)
     else:   return False
 
+def move(x,y,dir):
+    # print( x,y,dir)
+    if dir == 1: y -= 1
+    elif dir == 2: y += 1
+    elif dir == 3: x -= 1
+    elif dir == 4: x += 1
+    return x,y
+    
+def backtrace(x,y):
+    x0,y0 = 0,0
+    visited = []
+    open = [ (x0,y0,0) ]
+    while open:
+        xc,yc,steps = open.pop()
+        if xc == x and yc == y: 
+            print(steps)
+            return
+        visited.append( (xc,yc) )
+        for i in range(1,5):
+            xn,yn = move(xc,yc,i)
+            if (xn,yn) not in visited and map[(xn,yn)] == ".":
+                open.append( (xn,yn,steps+1) )   
+
+def print_map():
+    map[ (0,0)] = "o"
+    # print(map)
+    k = map.keys()
+    xmin,ymin = 0,0
+    xmax,ymax = 0,0
+    for x,y in k:
+        if x < xmin: xmin = x
+        elif x > xmax: xmax = x
+        if y < ymin: ymin = y
+        elif y > ymax: ymax = y
+        
+    for j in range(ymin, ymax+1):
+        line = ""
+        for i in range(xmin, xmax+1):
+            line += map.get( (i,j), " ")
+        print( line )
+
+def get_back(x,y,xb,yb):
+    if x != xb:
+        if x < xb: return 4
+        else: return 3
+    if y != yb:
+        if y < yb: return 2
+        else: return 1
+        
+        
 def calculate():
     position = 0
     base = 0
-    posx = True
-    posy = False
-    id = False
-    save = []
-    ball = []
-    paddle = []
-    blocks = 0
+    reply = 1
+    x,y = 0,0
+    dir = 0
+    backsteps = []
+    dead = []
+    direction = "forward"
 
     while( dict[position] != 99):
         opcode = dict[position] 
@@ -74,33 +110,53 @@ def calculate():
             
         elif( opcode == 3 ):
             first = dict[position + 1]
-            print_game()
-            time.sleep(0.1)
-            ballx, bally = ball
-            paddlex, paddley = paddle
-            if ballx < paddlex: second = -1
-            elif ballx > paddlex: second = 1
-            elif ballx == paddlex: second = 0
+            # second = input("Please give ID of a system: ")
+            i = 0
+            while True:
+                i += 1
+                if i > 4:
+                    xb,yb = backsteps[-1]
+                    del backsteps[-1]
+                    # print(x,y,xb,yb)
+                    i = get_back(x,y,xb,yb)
+                    dead.append( (x,y) )
+                    direction = "back"
+                    x,y = xb,yb
+                    second = i
+                    dir = i
+                    break
+                xn,yn = move(x,y,i)
+                if (xn,yn) not in dead and (xn,yn) not in backsteps:
+                    second = i
+                    dir = second
+                    break
+            # print("input ", x,y,second, len(backsteps), i)
             put_result(dict.get(position+1,0), param1, base, int(second))
             position += 2
             
         elif( opcode == 4):
-            if posx:
-                posx = False
-                posy = True
-                save.append(first)
-            elif posy:
-                posy = False
-                id = True
-                save.append(first)
-            elif id:
-                id = False
-                posx = True
-                if first == 4: ball = save
-                elif first == 3: paddle = save
-                elif first == 2: blocks += 1
-                game[ (save[0],save[1]) ] = first
-                save = []
+            print_map()
+            # print(x,y, first, dir) 
+            if first == 0:  
+                xw,yw = move(x,y,dir)
+                dead.append( (xw,yw) )
+                map[ (xw,yw) ] = "#"
+            elif first == 1:
+                xn, yn = move(x,y,dir)
+                if direction == "forward" and (x,y) not in backsteps:
+                    backsteps.append( (x,y) )                
+                else:
+                    direction = "forward"
+                x,y = xn,yn
+                map[ (x,y) ] = "."
+                
+            elif first == 2:
+                x,y = move(x,y,dir)
+                map[ (x,y) ] = "X"
+                print_map()
+                print("found")
+                backtrace(x,y)
+                return
             position += 2
             
         elif( opcode == 5):
@@ -132,7 +188,7 @@ def calculate():
             base += first
             position += 2
         else: break
-    print( "Blocks: ", blocks)
+    print_map()
 
 file = open(sys.argv[1],'r')
 
@@ -140,11 +196,10 @@ file = list(map( int, file.readline().split(",")))
 numbers = file.copy()
 
 dict = {}
-game = {}
+map = {}
 
 for i in range(len(numbers)):
     dict[i] = numbers[i]
 
 calculate()
 
-print("Score: ",sorted(game.values())[-1])

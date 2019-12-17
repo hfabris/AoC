@@ -1,17 +1,4 @@
-import sys, numpy,time
-
-def print_game():
-    xdim, ydim = sorted(game.keys())[-1]
-    for y in range(ydim+1):
-        line = ""
-        for x in range(xdim+1):
-            if game[ (x,y) ] == 0: line += " "
-            elif game[ (x,y) ] == 1: line += "|"
-            elif game[ (x,y) ] == 2: line += "#"
-            elif game[ (x,y) ] == 3: line += "_"
-            elif game[ (x,y) ] == 4: line += "o"
-        print(line)
-    print("\n\n")
+import sys
 
 def put_result(position, mode, base, result):
     if mode == 2:
@@ -31,13 +18,15 @@ def get_number( position, mode, base):
 def calculate():
     position = 0
     base = 0
-    posx = True
-    posy = False
-    id = False
-    save = []
-    ball = []
-    paddle = []
-    blocks = 0
+    # lines = []
+    line = ""
+    
+    part = 0
+    fun = [65,44,67,44,65,44,66,44,65,44,67,44,66,44,67,44,66,44,65,10]
+    A = [76,44,49,50,44,82,44,52,44,82,44,52,44,76,44,54,10]
+    B = [76,44,53,44,53,44,76,44,54,44,82,44,52,10]
+    C = [76,44,49,50,44,82,44,52,44,82,44,52,44,82,44,49,50,10]
+    end = [121, 10]
 
     while( dict[position] != 99):
         opcode = dict[position] 
@@ -74,33 +63,21 @@ def calculate():
             
         elif( opcode == 3 ):
             first = dict[position + 1]
-            print_game()
-            time.sleep(0.1)
-            ballx, bally = ball
-            paddlex, paddley = paddle
-            if ballx < paddlex: second = -1
-            elif ballx > paddlex: second = 1
-            elif ballx == paddlex: second = 0
+            # second = input("Please give ID of a system: ")
+            if part == 0:   next = fun[0]; del fun[0]
+            elif part == 1: next = A[0]; del A[0]
+            elif part == 2: next = B[0]; del B[0]
+            elif part == 3: next = C[0]; del C[0]
+            elif part == 4: next = end[0]; del end[0]
+            if int(next) == 10: part += 1
+            second = next
             put_result(dict.get(position+1,0), param1, base, int(second))
             position += 2
             
-        elif( opcode == 4):
-            if posx:
-                posx = False
-                posy = True
-                save.append(first)
-            elif posy:
-                posy = False
-                id = True
-                save.append(first)
-            elif id:
-                id = False
-                posx = True
-                if first == 4: ball = save
-                elif first == 3: paddle = save
-                elif first == 2: blocks += 1
-                game[ (save[0],save[1]) ] = first
-                save = []
+        elif( opcode == 4):   
+            if first < 256:
+                line += chr(first)  
+            else: print("Part 2: ", first )
             position += 2
             
         elif( opcode == 5):
@@ -132,19 +109,53 @@ def calculate():
             base += first
             position += 2
         else: break
-    print( "Blocks: ", blocks)
+    return line
 
+def check_position(x,y, lines, xmax, ymax):
+    
+    if x-1 >= 0 and lines[y][x-1] != "#": return False
+    elif x+1 < xmax and lines[y][x+1] != "#": return False
+    
+    if y-1 >= 0 and lines[y-1][x] != "#": return False
+    elif y+1 < ymax and lines[y+1][x] != "#": return False
+    
+    return True
+    
+    
 file = open(sys.argv[1],'r')
 
 file = list(map( int, file.readline().split(",")))
 numbers = file.copy()
 
 dict = {}
-game = {}
 
 for i in range(len(numbers)):
     dict[i] = numbers[i]
 
-calculate()
+grid = calculate()
 
-print("Score: ",sorted(game.values())[-1])
+y,x = 0,0
+
+lines = grid.strip().split("\n")
+
+y = len(lines)
+x = len(lines[0])
+sum = 0
+
+for j in range(y):
+    for i in range(x):
+        if check_position(i,j,lines, x, y):
+            lines[j] =lines[j][:i] + "O" + lines[j][i+1:]
+            sum += j*i
+
+print("\n".join(lines))
+
+print("Part 1: ", sum )
+
+numbers[0] = 2
+
+dict = {}
+for i in range(len(numbers)):
+    dict[i] = numbers[i]
+
+grid = calculate()
